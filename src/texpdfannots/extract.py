@@ -7,65 +7,33 @@ PDF_ANNOT_STRIKE_OUT = (11, 'StrikeOut')
 PDF_ANNOT_CARET = (14, 'Caret')
 
 class Annot:
-    """My own version of pymupdf's Annot which fixes the bounding box of the Caret annotation and isn't fragile. See getStableAnnots()"""
-    def __init__ (self, _pageno, _type, _info, _xref, _irt_xref, _rect):
-        self.pageno = _pageno        
-        self.type = _type
-        self.info = _info                
-        self.xref = _xref
-        self.irt_xref = _irt_xref
-        self.rect = _rect
-        
+    def __init__ (self, pageno, typename, info, xref, irt_xref, rect):
+        self.type = typename
+        self.info = info
+        self.xref = xref
+        self.irt_xref = irt_xref
+        self.rect = rect
+        self.pageno = pageno
     def __str__ (self):
-        return str({'pageno':self.pageno,'type':self.type,'info':self.info,'xref':self.xref,'irt_xref':self.irt_xref,'rect':self.rect})
-    
+        return str({'pageno':self.pageno,'type':self.type,'xref':self.xref,'irt_xref':self.irt_xref})
     def __repr__ (self):
         return str(self)
 
-class Edit:
-    """
-    Represents the information necessary to carry out an edit. An edit has the following attributes:
-    
-    "pageno":    page number in the PDF the annotation appears on
-    
-    "type":      annotation type
-                 The Edit types are mostly a subset of the Annot types (full list at
-                 https://pymupdf.readthedocs.io/en/latest/vars.html#annotationtypes) with the exception
-                 of "Replace" which corresponds to the combination of a Strikeout and Caret annotation
-                 which are identified by isReplaceAnnot in getCorrections(), not by pymupdf. 
-    
-    "message":   text in the annotation comment box and responses to it---typically edit directions
-                 if it's not already self-evident from the type (e.g., Strikeout)
-    
-    "selection": selected and surrounding text of the annotation.
-
-    Example
-    {
-      "pageno" : 1, 
-      "type" : "Replace" 
-      "message": {
-                   "head": "Equation (1)", 
-                   "responses": ["COMP: pls link", "PE: okay?"]
-                 }
-      "selection": "Next we prove that <Replace>(1)</Replace> is a consequence of"
-    }
-
-    """
-    def __init__ (self, _pageno, _type, _message, _selection):
-        self.pageno = _pageno
-        self.type = _type
-        self.message = _message
-        self.selection = _selection
-        
+class CorrectionsAnnot:
+    def __init__ (self, pageno, typename, message, text, rect):
+        self.pageno = pageno
+        self.type = typename
+        self.message = message
+        self.text = text
+        self.rect = rect
     def __str__ (self):
-        return str({'pageno':self.pageno,'type':self.type,'message':self.message,'selection':self.selection})
-    
+        return str({'pageno':self.pageno,'type':self.type,'message':self.message,'text':self.text})
     def __repr__ (self):
         return str(self)
 
-def getStableAnnots(doc, draw_boxes = False):
+def get_stable_annots(doc, draw_boxes = False):
     """
-    The bounding boxes of the original caret annotations often extend below the line they
+    The bounding boxes of the original caret annotations often extend past the line they
     were inserted on, so they are resized to prevent that.
 
     pymupdf's annotations are also kind of fragile---they are strongly bound to the page they
@@ -94,11 +62,11 @@ def getStableAnnots(doc, draw_boxes = False):
             stable_annots[pageno].append(Annot(pageno,annot.type,annot.info,annot.xref,annot.irt_xref,raisedRect))
 
             if draw_boxes:                           
-                orig = page.add_freetext_annot(caretRect, "", text_color=(0,1,0))
+                orig = page.add_freetext_annot(annot.rect, "", text_color=(0,1,0))
                 orig.set_border(width=.3)
                 orig.update()                                       
             
-                ah = page.add_freetext_annot(stable_annots[pageno][-1].rect, "", text_color=(0,0,1))
+                ah = page.add_freetext_annot(stable_annots[-1].rect, "", text_color=(0,0,1))
                 ah.set_border(width=.3)
                 ah.update() 
 
@@ -107,8 +75,8 @@ def getStableAnnots(doc, draw_boxes = False):
 
     return stable_annots
 
-def getAllResponses(stable_annots):
-    """return dictionary where dict[xref] => [annots for which annot.irt_xref == xref]"""
+def get_all_responses(stable_annots):
+    """Return dictionary where dict[xref] => [annots for which annot.irt_xref == xref]"""
     all_responses = dict()
     for pageno, annots in stable_annots.items():
         for annot in annots: 
@@ -120,9 +88,9 @@ def getAllResponses(stable_annots):
                 all_responses[annot.irt_xref] = [annot]
     return all_responses
 
-def getResponses(annot, all_responses):
+def get_responses(annot, all_responses):
     """
-    return dictionary where dict[type] =>
+    Return dictionary where dict[type] =>
     [annots for which annot.type == type and are a response to passed annot]
     """
     if annot.xref not in all_responses:
@@ -140,11 +108,22 @@ def getResponses(annot, all_responses):
     
     return resps_by_type
 
-def getCorrections(filename):
-    """return a list of Edits. See class Edit."""
+def get_corrections_annots(filename):
+    """ return a list of annotations of the form
+    {
+      "pageno" : 1, #2, 3, etc.
+      "type" : "StrikeOut" #(or Caret, Replace, Highlight, TextBox)
+      "message": {
+                   "head": "Original message", #(e.g., "COMP: roman")
+                   "text_responses": ["text response to original message", "next response", ...]
+                 }
+      "text": "Next we prove that <selection>(1)</selection> is a consequence of" # surrounding and selected text
+    # for standalone insertions, the caret tip will be marked <caret>
+    }
+    """
     doc = pymupdf.open(filename)
-    stable_annots = getStableAnnots(doc)
-    all_responses = getAllResponses(stable_annots)
+    stable_annots = get_stable_annots(doc)
+    all_responses = get_all_responses(stable_annots)
     
     corrections = []
     for pageno, page in enumerate(doc):
@@ -154,13 +133,12 @@ def getCorrections(filename):
                 # only true for text responses and annotations which combine
                 # with another to make an annotation of type 'Replace'
                 continue
-            responses = getResponses(annot, all_responses)
+            responses = get_responses(annot, all_responses)
             text_responses = responses[PDF_ANNOT_TEXT] if PDF_ANNOT_TEXT in responses else []
 
-            def isReplaceAnnot(ann, ann_resps):
-                if not (ann.type == PDF_ANNOT_STRIKE_OUT or ann.type == PDF_ANNOT_CARET) or ann_resps == []:
+            def is_replace_annot(ann, ann_resps):
+                if not (ann.type == PDF_ANNOT_STRIKE_OUT or ann.type == PDF_ANNOT_CARET):
                     return False
-                
                 assert ann.type not in ann_resps, "{} are in response to annotation of same type {}".format(str(ann_resps[ann.type]), str(ann))
                 assert len(ann_resps.keys()) <= 2, "ann {} has responses {} of more than two types".format(ann, ann_resps)
                 
@@ -169,14 +147,55 @@ def getCorrections(filename):
                     return False
                 other_ann = ann_resps[other_ann_type][0]
 
-                # TODO: finish
                 return ann.rect.intersects(other_ann.rect) and other_ann.info['content'] == ''
                 
-            if isReplaceAnnot(annot, responses):
+            if is_replace_annot(annot, responses):
                 annot.type = (None, 'Replace')
+
+            def get_text(ann):
                 
-        return -1
-            
+
+
+def draw_bounding_boxes(filename, annots):
+    doc = pymupdf.open(filename)
+    for pageno,page in enumerate(doc):
+        for annot in annots[pageno]:
+            if annot.type == PDF_ANNOT_TEXT:
+                continue
+            box = page.add_freetext_annot(annot.rect, '', text_color=(1,0,1))
+            box.set_border(width=.5)
+            box.update()
+    doc.save('bounding_boxes.pdf')
+        
+        
 if __name__ == '__main__':
-    print()
+    parser = argparse.ArgumentParser(prog = 'extannots.py',
+                                     description = 'Extract annotations and comments from an annotated PDF as a .json file')
+    parser.add_argument('filename')
+    args = parser.parse_args()
+    # doc = pymupdf.open(args.filename)
+    filename = args.filename
+
+    # annots = get_stable_annots(filename)
+
+    get_corrections_annots(filename)
+    
+    # draw_bounding_boxes(filename, annots)
+
+    # get_annots(doc)
+
+    # for page in doc:
+    #     for annot in page.annots():
+    #         irtxref = annot.irt_xref
+
+    #         print(annot)
+    #         print(annot.rect)
+    #         print("info: '{}'".format(annot.info))
+    #         print("text in annotation rect: '{}'".format(page.get_textbox(annot.rect)))
+    #         print("xref: '{}'".format(annot.xref))
+    #         # print("responses: '{}'".format())
+
+    #         if irtxref != 0:
+    #             print("IRT_XREF: '{}'".format(irtxref))
+    #         print()
     

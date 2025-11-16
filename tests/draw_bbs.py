@@ -1,4 +1,6 @@
-from extannots import *
+from extract_annotations.extannots import getStableAnnots, PDF_ANNOT_TEXT
+import argparse
+import pymupdf
 
 def drawAnnotBBs(filename, savefile = 'ann_bbs.pdf'):
     """draw bounding boxes of annotations in annotated PDF"""
@@ -53,6 +55,6 @@ if __name__ == '__main__':
     doc = pymupdf.open(filename)
     annots = getStableAnnots(doc, True)
     
-    drawBoundingBoxes(filename)
+    drawAnnotBBs(filename)
     line_bbs = drawLineBBs(filename)    
-    drawStableAnnotBoxes(line_bbs, annots, 'combined_stable_line_bbs.pdf')
+    drawStableAnnotBBs(line_bbs, annots, 'combined_stable_line_bbs.pdf')

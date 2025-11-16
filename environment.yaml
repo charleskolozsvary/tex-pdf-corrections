@@ -1,9 +1,5 @@
-name: corrections
+name: texpdfannots
 channels:
   - defaults
 dependencies:
   - python=3.14
-  - perl
-  - pip
-  - pip:
-    - pymupdf
