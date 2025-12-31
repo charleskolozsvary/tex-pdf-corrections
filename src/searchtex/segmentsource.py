@@ -136,7 +136,7 @@ def markNode(latex_node, allowed_environments: set[str], markcsname) -> str:
             verb_str = node.latex_verbatim()
             # mark every word in safe envs
             # negative lookahead (?!\.) to avoid 'end.' -> 'end\marks\pagemark{}.'
-            marked_str, num_subs = re.subn(r'\b(\w+)\b(?!\.)', lambda m: rf'{m.group(0)}\marks\{markcsname}{{{next(c)}}}', verb_str)
+            marked_str, num_subs = re.subn(r'\b\w+\b(?!\.)', lambda m: rf'{m.group(0)}\marks\{markcsname}{{{next(c)}}}', verb_str)
             logging.debug(f"marked {num_subs} words in {verb_str}")
             return marked_str
         elif node.isNodeType(LatexGroupNode):

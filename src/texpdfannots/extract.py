@@ -1,4 +1,5 @@
 import pymupdf
+import json
 from copy import deepcopy
 
 PDF_ANNOT_TEXT = (0, 'Text')
@@ -72,7 +73,15 @@ class Edit:
         self.debug_bbs = _debug_bbs # will not be sent to the model
         
     def __str__ (self):
-        return f"pageno:{self.pageno},\ntype:{self.type},\nmessage:{self.message},\nselection:{self.selection}"
+        return json.dumps({
+            "pageno": self.pageno,
+            "type": self.type,
+            "message": {
+                "comment": self.message['comment'],
+                "responses": self.message['responses']
+            },
+            "selection": self.selection
+        }, indent=4, ensure_ascii=False)
     
     def __repr__ (self):
         return str(self)
@@ -234,4 +243,3 @@ if __name__ == '__main__':
     corrections = getCorrections('TeX/AnnotatedPDFS/ann0.pdf')
     for cor in corrections:
         print(cor)
-        print()
