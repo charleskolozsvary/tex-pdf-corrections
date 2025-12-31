@@ -1,0 +1,13 @@
+\documentclass{amsart}
+\scrollmode
+\showboxbreadth=10000
+\showboxdepth=10000
+\AddToHook{shipout/after}{%
+  \message{Shipping page \thepage}%
+  }
+\begin{document}
+Hi, my name is Charles. Here is some math: $x^2 + x - 1 = 0$; $x = {-1\pm\sqrt{5} \over 2}$.
+\pagebreak
+Hi again.
+\showlists
+\end{document}

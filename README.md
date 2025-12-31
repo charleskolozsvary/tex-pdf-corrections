@@ -37,9 +37,9 @@ if the text selected belonged to just one line).
 
 To handle these cases I would need to
 1. Identify highlight, strikeout, or other multi-select annotations whose bounding boxes include more than one line.
-2. determine which line bounding boxes the annotation visual intersections with
+2. determine which line bounding boxes the annotation visual intersects with
 3. Create the selected text "surrounding text <selected>text where the visual annotation intersects the line</selected> more surrounding
 
-It's possible that 2. can be done by reading information from the PDF, but more likely I would need to process that region of the pdf as an image and
+It's possible that (2) can be done by reading information from the PDF, but more likely I would need to process that region of the pdf as an image and
 use some computer vision methods.
 

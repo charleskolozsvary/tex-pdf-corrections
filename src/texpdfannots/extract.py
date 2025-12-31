@@ -1,14 +1,15 @@
 import pymupdf
-import argparse
-import re
 from copy import deepcopy
 
 PDF_ANNOT_TEXT = (0, 'Text')
 PDF_ANNOT_STRIKE_OUT = (11, 'StrikeOut')
 PDF_ANNOT_CARET = (14, 'Caret')
 
-CARET_BUFF = 2 # points
-EXTRACT_TEXT_BUFFER_WIDTH = 2 # 2 pt
+# When extracting selection text I alter the bounding boxes slightly to avoid repeating or missing symbols.
+# The value of two points was chosen heuristically; it works well enough for the time being on the PDFs I've tested.
+# It is possible that this approach will fail on very small or large text and will need to updated in the future.
+CARET_BUFF = 2 # in pymupdf points
+EXTRACT_TEXT_BUFFER_WIDTH = 2 # also in pymupdf points
 
 class Annot:
     """Revised version of pymupdf's Annot which fixes the bounding box of the Caret annotation and isn't fragile. See getStableAnnots()"""
@@ -22,8 +23,13 @@ class Annot:
         self.intersecting_line_bb = _intersecting_line_bb
         
     def __str__ (self):
-        return str({'pageno':self.pageno,'type':self.type,'info':self.info,'xref':self.xref,
-                    'irt_xref':self.irt_xref,'rect':self.rect,'intersecting line bb':self.intersecting_line_bb})
+        return str({'pageno':self.pageno,
+                    'type':self.type,
+                    'info':self.info,
+                    'xref':self.xref,
+                    'irt_xref':self.irt_xref,
+                    'rect':self.rect,
+                    'intersecting line bb':self.intersecting_line_bb})
     
     def __repr__ (self):
         return str(self)
@@ -58,14 +64,15 @@ class Edit:
     }
 
     """
-    def __init__ (self, _pageno, _type, _message, _selection):
+    def __init__ (self, _pageno, _type, _message, _selection, _debug_bbs):
         self.pageno = _pageno
         self.type = _type
         self.message = _message
         self.selection = _selection
+        self.debug_bbs = _debug_bbs # will not be sent to the model
         
     def __str__ (self):
-        return str({'pageno':self.pageno,'type':self.type,'message':self.message,'selection':self.selection})
+        return f"pageno:{self.pageno},\ntype:{self.type},\nmessage:{self.message},\nselection:{self.selection}"
     
     def __repr__ (self):
         return str(self)
@@ -91,6 +98,8 @@ def getStableAnnots(doc, draw_boxes = False):
             if annot.type == PDF_ANNOT_TEXT:
                 stable_annots[pageno].append(Annot(pageno,annot.type,annot.info,annot.xref,annot.irt_xref,annotRect,None))
                 continue
+
+            assert len(intersecting_line_bbs) > 0, "len(intersecting_line_bbs) <= 0 should not happen"
             
             # bbbox = (x0, y0, x1, y1)
             highest_baseline_bb = sorted(intersecting_line_bbs, key = lambda bb : bb[3])[0]
@@ -150,19 +159,20 @@ def getResponses(annot, all_responses):
     return resps_by_type
 
 def getSelection(ann, doc):
+    """return an annotations selected text (and the bounding boxes for debugging purposes)"""
     buff = EXTRACT_TEXT_BUFFER_WIDTH
     selection_name = ann.type[1]
     page = doc[ann.pageno]
     x0, y0, x1, y1 = ann.intersecting_line_bb
     
-    if selection_name == 'Caret':
+    if selection_name == PDF_ANNOT_CARET[1]:
         insertion_point_x = ann.rect.x0 + ann.rect.width/2
         left_rect = pymupdf.Rect(x0, y0, insertion_point_x-CARET_BUFF, y1)
         right_rect = pymupdf.Rect(insertion_point_x+CARET_BUFF, y0, x1, y1)
         return '{left}<Caret></Caret>{right}'.format(left = page.get_textbox(left_rect),
-                                                     right = page.get_textbox(right_rect))
+                                                     right = page.get_textbox(right_rect)), (left_rect, right_rect)
 
-    elif re.match('(?:Replace|StrikeOut|Highlight|Underline)', selection_name):
+    elif selection_name in {"Replace", "StrikeOut", "Highlight", "Underline"}:
         left_rect = pymupdf.Rect(x0, y0, ann.rect.x0-buff, y1)
         middle_rect = pymupdf.Rect(ann.rect.x0+buff/2, y0, ann.rect.x1-buff/2, y1)
         # middle_rect = pymupdf.Rect(ann.rect.x0, y0, ann.rect.x1, y1)
@@ -170,7 +180,7 @@ def getSelection(ann, doc):
         return '{left}<{name}>{middle}</{name}>{right}'.format(left = page.get_textbox(left_rect),
                                                                middle = page.get_textbox(middle_rect),
                                                                right = page.get_textbox(right_rect),
-                                                               name = selection_name)
+                                                               name = selection_name), (left_rect, middle_rect, right_rect)
     else:
         return None
     
@@ -210,13 +220,13 @@ def getCorrections(filename):
             is_replace, other_ann = isReplaceAnnot(annot, responses)
             
             if is_replace:
-                if annot.type[1] == 'Caret':
+                if annot.type == PDF_ANNOT_CARET:
                     annot.rect = other_ann.rect
                 annot.type = (None, 'Replace')
 
-            selection_text = getSelection(annot, doc)
+            selection_text, bbs = getSelection(annot, doc)
 
-            corrections.append(Edit(annot.pageno, annot.type[1], message, selection_text))
+            corrections.append(Edit(annot.pageno, annot.type[1], message, selection_text, bbs))
                 
     return corrections
             
