@@ -23,23 +23,15 @@ After activating the conda environment, run
 poetry install
 ```
 
+# Current limitations 
 
-# TODO
-- Draw bounding boxes for text extraction
-- may need to find size of adjacent letters
-
-
-# Other Considerations
-
-## Annotations that select text on more than one line
-When an annotation selects text on more than one line, it's rectangle encompases all lines of selected text, no longer just the text itself (as it would be
+## Multi-line selections
+When an annotation selects text on more than one line, it's bounding box encompases all lines of selected text, no longer just the marked text (as it would be
 if the text selected belonged to just one line).
 
 To handle these cases I would need to
-1. Identify highlight, strikeout, or other multi-select annotations whose bounding boxes include more than one line.
-2. determine which line bounding boxes the annotation visual intersects with
-3. Create the selected text "surrounding text <selected>text where the visual annotation intersects the line</selected> more surrounding
+1. Identify highlight, strikeout, or other multi-select annotations whose bounding boxes include more than one line. (with pymupdf)
+2. determine the bounding boxes of the actual annotation visual 
 
-It's possible that (2) can be done by reading information from the PDF, but more likely I would need to process that region of the pdf as an image and
-use some computer vision methods.
+From what I can tell, the PDF does not contain the information necessary to determine (2). There's only one bounding box for an annotation and it is incorrect as discussed. It would not be extremely difficult to use some computer vision approach, even if it feels heavy handed.
 
