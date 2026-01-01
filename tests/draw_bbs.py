@@ -5,8 +5,11 @@ from pathlib import Path
 
 import os
 
-def drawAnnotBBs(filename, savefile = 'ann_bbs.pdf'):
-    """draw bounding boxes of annotations in annotated PDF"""
+def shipPdfFilename(filename, output_dir, unique_ending):
+    return Path(output_dir) / f'{Path(filename).stem}_{unique_ending}.pdf'
+
+def drawAnnots(filename, output_dir, unique_ending = 'orig_annots'):
+    """draw bounding boxes of original annotations in annotated PDF"""
     doc = pymupdf.open(filename)
     for page in doc:
         for annot in page.annots():
@@ -15,11 +18,11 @@ def drawAnnotBBs(filename, savefile = 'ann_bbs.pdf'):
             box = page.add_freetext_annot(annot.rect, '', text_color=(1,0,1))
             box.set_border(width=.5)
             box.update()
-    doc.save(savefile)
+    doc.save(shipFilename(filename, output_dir, unique_ending))
     return savefile
 
 
-def drawStableAnnotBBs(filename, stable_annots, savefile = 'stable_ann_bbs.pdf'):
+def drawStableAnnots(filename, stable_annots, output_dir, unique_ending = 'stable_annots'):
     """draw bounding boxes of stable annotations"""
     doc = pymupdf.open(filename)
     for pageno,page in enumerate(doc):
@@ -29,11 +32,11 @@ def drawStableAnnotBBs(filename, stable_annots, savefile = 'stable_ann_bbs.pdf')
             box = page.add_freetext_annot(annot.rect, '', text_color=(1,0,1))
             box.set_border(width=.5)
             box.update()
-    doc.save(savefile)
+    doc.save(shipFilename(filename, output_dir, unique_ending))
     return savefile
 
 
-def drawLineBBs(filename, savefile = 'line_bbs.pdf'):
+def drawLines(filename, ouput_dir, unique_ending = 'lines'):
     """draw the bounding boxes of the lines from page.get_text('dict', sort=True)['blocks']"""
     doc = pymupdf.open(filename)
     for page in doc:
@@ -44,14 +47,19 @@ def drawLineBBs(filename, savefile = 'line_bbs.pdf'):
             box = page.add_freetext_annot(bb, '', text_color=(1,0,0))
             box.set_border(width=.5)
             box.update()
-    doc.save(savefile)
+    doc.save(shipFilename(filename, output_dir, unique_ending))
     return savefile
 
-def drawSelectionBBs(filename, savefile = 'sel_bbs.pdf'):
-    """draw the bounding boxes of the selected text for each annotation"""
-    out_str = ''
+def drawEdits(filename, output_dir, unique_ending = 'edit_selections'):
+    """draw the bounding boxes for extracting the selected text and the Edit json for each annotation
+       yes this is more messy than it needs to be
+    """
     corrections = getCorrections(filename)
-    selection_file_names = []
+    
+    out_str = ''
+    single_fname_prefix = Path(output_dir) / f'{Path(filename).stem}_{unique_ending}'
+    singlepage_file_names = []
+    
     for i, correction in enumerate(corrections):
         doc = pymupdf.open(filename)
         page_count = doc.page_count
@@ -69,44 +77,54 @@ def drawSelectionBBs(filename, savefile = 'sel_bbs.pdf'):
             box = page.add_freetext_annot(bb, '', text_color=colors[j])
             box.set_border(width=.75)
             box.update()
-        print(f'{i}/{len(corrections)}')
-        box = page.add_freetext_annot((5,5,550,350), str(correction), fontsize=10, fontname="Cour", text_color=(.7, .2, .5))
+        box = page.add_freetext_annot((5,5,500,350), str(correction), fontsize=10, fontname="Cour", text_color=(.7, .2, .5))
         box.update()
-        single_save = Path('selections') / f'{Path(filename).stem}_selection_{i}.pdf'
+
+        single_save = f'{single_fname_prefix}_{i}.pdf'
         doc.save(single_save)
+
         out_str += f'{single_save}\n{i} {correction}\n\n'
-        selection_file_names.append(single_save)
+        
+        singlepage_file_names.append(single_save)
+        print(f'{i:3i}/{len(corrections):3i}')
         
     combined_doc = pymupdf.open(filename)
+    ## silly, but I'm not aware of a simpler way
     combined_doc.delete_pages(from_page=0, to_page=combined_doc.page_count-1)
-    for single_page in selection_file_names:
+    for single_page in singlepage_file_names:
         single_pdf = pymupdf.open(single_page)
         combined_doc.insert_pdf(single_pdf, annots=True)
-    combined_doc.save(Path('selections') / f'{Path(filename).stem}_combined_selections.pdf')
+        
+    combined_doc.save(shipFilename(filename, output_dir, unique_ending))
 
-    print("okay supposedly saved...")
-    selection_dir = 'selections'
-    os.system(f"rm {Path(selection_dir) / Path(filename).stem}_selection_*.pdf")
+    print("Combined doc saved...")
+    print("Deleting intermediate PDFs...")
     
-    with open(f'{Path(filename).stem}_corrections_out.txt', 'w') as f:
+    os.system(f"rm {single_fname_prefix}_*.pdf")
+    
+    with open(f'{Path(output_dir) / Path(filename).stem}_corrections_out.txt', 'w') as f:
         f.write(out_str)
+
+    return 0
     
         
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(prog = 'extannots.py',
-                                     description = 'Extract annotations and comments from an annotated PDF as a .json file')
+    parser = argparse.ArgumentParser(prog = 'python draw_bbs.py',
+                                     description = 'Draw various bounding boxes')
     parser.add_argument('filename')
     args = parser.parse_args()
     filename = args.filename
 
-    # doc = pymupdf.open(filename)
-    # annots = getStableAnnots(doc, True)
+    doc = pymupdf.open(filename)
     
-    # drawAnnotBBs(filename)
-    # line_bbs = drawLineBBs(filename)    
-    # drawStableAnnotBBs(line_bbs, annots, 'combined_stable_line_bbs.pdf')
+    annots = getStableAnnots(doc, True) # from extract.py
+    bb_dir = Path('drawn_boxes')
+    
+    drawAnnots(filename, bb_dir)
+    line_bbs = drawLines(filename, bb_dir)
+    drawStableAnnots(line_bbs, annots, bb_dir)
 
-    drawSelectionBBs(filename)
+    drawSelectionBBs(filename, bb_dir)
 
     
     
