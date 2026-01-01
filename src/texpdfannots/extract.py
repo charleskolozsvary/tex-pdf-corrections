@@ -86,7 +86,7 @@ class Edit:
     def __repr__ (self):
         return str(self)
 
-def getStableAnnots(doc, draw_boxes = False):
+def getStableAnnots(doc):
     """
     The bounding boxes of the original caret annotations often extend below the line they
     were inserted on, so they are resized to prevent that.
@@ -119,18 +119,6 @@ def getStableAnnots(doc, draw_boxes = False):
                 annotRect = raisedRect
 
             stable_annots[pageno].append(Annot(pageno,annot.type,annot.info,annot.xref,annot.irt_xref,annotRect,highest_baseline_bb))
-
-            if draw_boxes:               
-                orig = page.add_freetext_annot(annotRect, "", text_color=(0,1,0))
-                orig.set_border(width=.3)
-                orig.update()                                       
-            
-                ah = page.add_freetext_annot(stable_annots[pageno][-1].rect, "", text_color=(0,0,1))
-                ah.set_border(width=.3)
-                ah.update() 
-
-    if draw_boxes:
-        doc.save('caret-isects.pdf')
 
     return stable_annots
 
@@ -184,7 +172,6 @@ def getSelection(ann, doc):
     elif selection_name in {"Replace", "StrikeOut", "Highlight", "Underline"}:
         left_rect = pymupdf.Rect(x0, y0, ann.rect.x0-buff, y1)
         middle_rect = pymupdf.Rect(ann.rect.x0+buff/2, y0, ann.rect.x1-buff/2, y1)
-        # middle_rect = pymupdf.Rect(ann.rect.x0, y0, ann.rect.x1, y1)
         right_rect = pymupdf.Rect(ann.rect.x1+buff, y0, x1, y1)
         return '{left}<{name}>{middle}</{name}>{right}'.format(left = page.get_textbox(left_rect),
                                                                middle = page.get_textbox(middle_rect),
@@ -193,7 +180,6 @@ def getSelection(ann, doc):
     else:
         return None
     
-
 def getCorrections(filename):
     """return a list of Edits. See class Edit."""
     doc = pymupdf.open(filename)
@@ -234,7 +220,6 @@ def getCorrections(filename):
                 annot.type = (None, 'Replace')
 
             selection_text, bbs = getSelection(annot, doc)
-
             corrections.append(Edit(annot.pageno, annot.type[1], message, selection_text, bbs))
                 
     return corrections
