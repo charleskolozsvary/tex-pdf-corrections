@@ -1,0 +1,35 @@
+\documentclass{amsart}
+%% \usepackage{hyperref}
+\newtheorem{theorem}{Theorem}
+
+\newwrite\markfile
+\immediate\openout\markfile=boxpositions_mosteqrefdiff.txt
+
+\newcommand{\markbox}[2]{%
+  \setbox0=\hbox{#2}%
+  \immediate\write\markfile{#1:whd{}:\the\value{page}:\the\wd0:\the\ht0:\the\dp0}%
+  \pdfsavepos
+  \write\markfile{#1:start:\the\value{page}:\the\pdflastxpos:\the\pdflastypos}%
+  #2% 
+  \pdfsavepos
+  \write\markfile{#1:end{}:\the\value{page}:\the\pdflastxpos:\the\pdflastypos}%
+}
+
+\begin{document}
+\begin{equation}\label{eq0}
+  a^2 + b^2 = c^2
+\end{equation}
+\begin{equation}\label{eq1}
+  e^{i\theta} = -1
+\end{equation}
+\begin{equation}\label{eq2}
+  F + V - E = 2
+\end{equation}
+\begin{equation}\label{eq3}
+  \sum_{v \in V}\operatorname{deg}v = |E|
+\end{equation}
+Now \markbox{0}{for} \markbox{1}{a} \markbox{2}{page} \markbox{3}{which} \markbox{4}{will} \markbox{5}{give} \markbox{6}{me} \markbox{7}{the} \markbox{8}{reasonable} \markbox{9}{upper} \markbox{10}{bound} \markbox{11}{for} \markbox{12}{the} \markbox{13}{differences} \markbox{14}{caused} \markbox{15}{by} {\tt \string\eqref} \markbox{16}{on} \markbox{17}{a} page.
+\pagebreak
+\begin{theorem} \markbox{18}{Not} \markbox{19}{a} theorem. \markbox{20}{Just} \markbox{21}{a} \markbox{22}{bunch} \markbox{23}{of} {\tt \string\eqref}s. \eqref{eq0} \markbox{24}{and} \eqref{eq1} \markbox{25}{and} \eqref{eq2} \markbox{26}{and} \eqref{eq3} \markbox{27}{and} \eqref{eq0} \markbox{28}{and} \eqref{eq1} \markbox{29}{and} \eqref{eq2} \markbox{30}{and} \eqref{eq3} \markbox{31}{and} \eqref{eq0} \markbox{32}{and} \eqref{eq1} \markbox{33}{and} \eqref{eq2} \markbox{34}{and} \eqref{eq3} \markbox{35}{and} \eqref{eq0} \markbox{36}{and} \eqref{eq1} \markbox{37}{and} \eqref{eq2} \markbox{38}{and} \eqref{eq3} \markbox{39}{and} \eqref{eq0} \markbox{40}{and} \eqref{eq1} \markbox{41}{and} \eqref{eq2} \markbox{42}{and} \eqref{eq3} \markbox{43}{and} \eqref{eq0} \markbox{44}{and} \eqref{eq1} \markbox{45}{and} \eqref{eq2} \markbox{46}{and} \eqref{eq3} \markbox{47}{and} \eqref{eq0} \markbox{48}{and} \eqref{eq1} \markbox{49}{and} \eqref{eq2} \markbox{50}{and} \eqref{eq3} \markbox{51}{and} \eqref{eq0} \markbox{52}{and} \eqref{eq1} \markbox{53}{and} \eqref{eq2} \markbox{54}{and} \eqref{eq3} \markbox{55}{and} \eqref{eq0} \markbox{56}{and} \eqref{eq1} \markbox{57}{and} \eqref{eq2} \markbox{58}{and} \eqref{eq3} \markbox{59}{and} \eqref{eq0} \markbox{60}{and} \eqref{eq1} \markbox{61}{and} \eqref{eq2} \markbox{62}{and} \eqref{eq3} \markbox{63}{and} \eqref{eq0} \markbox{64}{and} \eqref{eq1} \markbox{65}{and} \eqref{eq2} \markbox{66}{and} \eqref{eq3} \markbox{67}{and} \eqref{eq0} \markbox{68}{and} \eqref{eq1} \markbox{69}{and} \eqref{eq2} \markbox{70}{and} \eqref{eq3} \markbox{71}{and} \eqref{eq0} \markbox{72}{and} \eqref{eq1} \markbox{73}{and} \eqref{eq2} \markbox{74}{and} \eqref{eq3} \markbox{75}{and} \eqref{eq0} \markbox{76}{and} \eqref{eq1} \markbox{77}{and} \eqref{eq2} \markbox{78}{and} \eqref{eq3} \markbox{79}{and} \eqref{eq0} \markbox{80}{and} \eqref{eq1} \markbox{81}{and} \eqref{eq2} \markbox{82}{and} \eqref{eq3} \markbox{83}{and} \eqref{eq0} \markbox{84}{and} \eqref{eq1} \markbox{85}{and} \eqref{eq2} \markbox{86}{and} \eqref{eq3} \markbox{87}{and} \eqref{eq0} \markbox{88}{and} \eqref{eq1} \markbox{89}{and} \eqref{eq2} \markbox{90}{and} \eqref{eq3} \markbox{91}{and} \eqref{eq0} \markbox{92}{and} \eqref{eq1} \markbox{93}{and} \eqref{eq2} \markbox{94}{and} \eqref{eq3} \markbox{95}{and} \eqref{eq0} \markbox{96}{and} \eqref{eq1} \markbox{97}{and} \eqref{eq2} \markbox{98}{and} \eqref{eq3} \markbox{99}{and} \eqref{eq0} \markbox{100}{and} \eqref{eq1} \markbox{101}{and} \eqref{eq2} \markbox{102}{and} \eqref{eq3} \markbox{103}{and} \eqref{eq0} \markbox{104}{and} \eqref{eq1} \markbox{105}{and} \eqref{eq2} \markbox{106}{and} \eqref{eq3} \markbox{107}{and} \eqref{eq0} \markbox{108}{and} \eqref{eq1} \markbox{109}{and} \eqref{eq2} \markbox{110}{and} \eqref{eq3} \markbox{111}{and} \eqref{eq0} \markbox{112}{and} \eqref{eq1} \markbox{113}{and} \eqref{eq2} and
+  \end{theorem}
+\end{document}

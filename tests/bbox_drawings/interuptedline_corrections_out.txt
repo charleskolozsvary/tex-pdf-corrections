@@ -1,0 +1,33 @@
+bbox_drawings/interuptedline_edit_selections_0.pdf
+0 {
+    "pageno": 0,
+    "type": "Replace",
+    "message": {
+        "comment": "\\dots something\\dots{}",
+        "responses": []
+    },
+    "selection": "Here <Replace>is a line</Replace> which has"
+}
+
+bbox_drawings/interuptedline_edit_selections_1.pdf
+1 {
+    "pageno": 0,
+    "type": "Replace",
+    "message": {
+        "comment": "Now normal",
+        "responses": []
+    },
+    "selection": "middle. What a mess. <Replace>i=0\nAnd some more</Replace> words, too."
+}
+
+bbox_drawings/interuptedline_edit_selections_2.pdf
+2 {
+    "pageno": 0,
+    "type": "Caret",
+    "message": {
+        "comment": ",",
+        "responses": []
+    },
+    "selection": "b−β\nα<Caret></Caret>"
+}
+

@@ -1,3 +1,6 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
 *~
 
 __pycache__
@@ -6,3 +9,4 @@ __pycache__
 *.log
 *.out
 *.aux
+*.brf
