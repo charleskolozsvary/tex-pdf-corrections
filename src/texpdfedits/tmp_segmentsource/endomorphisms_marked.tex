@@ -76,12 +76,12 @@
 
 \newcommand{\markbox}[2]{%
   \setbox0=\hbox{#2}%
-  \immediate\write\markfile{#1:whd{}:\the\value{page}:\the\wd0:\the\ht0:\the\dp0}%
+  \immediate\write\markfile{#1:pwhd:\the\value{page}:\the\wd0:\the\ht0:\the\dp0}%
   \pdfsavepos
-  \write\markfile{#1:start:\the\value{page}:\the\pdflastxpos:\the\pdflastypos}%
+  \write\markfile{#1:spxy:\the\value{page}:\the\pdflastxpos:\the\pdflastypos:}%
   #2% 
   \pdfsavepos
-  \write\markfile{#1:end{}:\the\value{page}:\the\pdflastxpos:\the\pdflastypos}%
+  \write\markfile{#1:epxy:\the\value{page}:\the\pdflastxpos:\the\pdflastypos:}%
 }
 
 \begin{document}
